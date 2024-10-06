@@ -11,6 +11,7 @@ import java.util.UUID;
 @EqualsAndHashCode
 @AllArgsConstructor
 @NoArgsConstructor
+@ToString
 public class AnswerNode {
     @Id
     @GeneratedValue

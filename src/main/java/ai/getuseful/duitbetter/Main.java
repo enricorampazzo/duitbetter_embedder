@@ -6,7 +6,6 @@ import ai.getuseful.duitbetter.entities.WebPageNode;
 import ai.getuseful.duitbetter.json.QuestionAndAnswer;
 import ai.getuseful.duitbetter.repository.WebPageNodeRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
@@ -68,20 +67,40 @@ public class Main implements CommandLineRunner {
         while(!webPagesWithoutQuestions.isEmpty()){
             for(WebPageNode webPageWithoutQuestions: webPagesWithoutQuestions){
                 long started = System.currentTimeMillis();
-                System.out.format("Extracting question and answers from \n%s\nText length: %d",
+                System.out.format("Extracting question and answers from \n%s\nText length: %d\n",
                         webPageWithoutQuestions.getCleanedText(), webPageWithoutQuestions.getCleanedText().length());
                 List<QuestionAndAnswer> response = chatClient.prompt().user(String.format("""
-                                        Extract each question and answer from the following text:
+                                        Extract each question and answer from the following text, keeping in mind that a question must end with a question mark (?) and that an answer can have multiple periods (.). An answer can also be structured into bullet points and continue after a semicolon (:):
                                   %s
                                   """, webPageWithoutQuestions.getCleanedText())).call()
                         .entity(new ParameterizedTypeReference<>() {
                 });
                 long finished = System.currentTimeMillis();
-                System.out.format("Q&A extraction took %d", finished - started);
+                System.out.format("Q&A extraction took %d minutes\n", ((finished - started)/1000)/60);
                 List<QuestionNode> questions = new ArrayList<>();
-                for(QuestionAndAnswer questionAndAnswer: response){
-                    questions.add(new QuestionNode(questionAndAnswer.getQuestion(),
-                            new AnswerNode(questionAndAnswer.getAnswer())));
+                int lastQuestionNotEmpty = 0;
+                int lastAnswerNotEmpty = 0;
+                for(int i = 0; i < response.size(); i++){
+                    String question = Optional.ofNullable(response.get(i).getQuestion()).orElse("");
+                    String answer = Optional.ofNullable(response.get(i).getAnswer()).orElse("");
+                    boolean questionIsEmpty = question.isEmpty();
+                    boolean answerIsEmpty = answer.isEmpty();
+                    lastQuestionNotEmpty = questionIsEmpty ? lastQuestionNotEmpty : i;
+                    lastAnswerNotEmpty = answerIsEmpty ? lastAnswerNotEmpty: i;
+                    if(!questionIsEmpty && question.contains("?") && !answerIsEmpty){
+                        questions.add(new QuestionNode(question, new AnswerNode(answer)));
+                        continue;
+                    }
+                    if(questionIsEmpty || !question.contains("?")){
+                        if(questions.isEmpty()) {
+                            String existingAnswer = Optional.ofNullable(response.get(lastQuestionNotEmpty).getAnswer()).orElse("");
+                            questions.add(new QuestionNode(response.get(lastQuestionNotEmpty).getQuestion(), new AnswerNode(existingAnswer + answer)));
+                        }
+                        else {
+                            QuestionNode lastQuestion = questions.getLast();
+                            lastQuestion.getAnswer().setText(lastQuestion.getAnswer().getText() + question);
+                        }
+                    }
                 }
                 webPageWithoutQuestions.setQuestions(questions);
                 repository.save(webPageWithoutQuestions);
