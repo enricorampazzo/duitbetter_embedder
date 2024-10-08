@@ -1,13 +1,16 @@
 package ai.getuseful.duitbetter;
 
+import ai.getuseful.duitbetter.advisors.GraphQuestionAnswerAdvisor;
 import ai.getuseful.duitbetter.entities.AnswerNode;
 import ai.getuseful.duitbetter.entities.QuestionNode;
 import ai.getuseful.duitbetter.entities.WebPageNode;
 import ai.getuseful.duitbetter.json.QuestionAndAnswer;
+import ai.getuseful.duitbetter.repository.QuestionNodeRepository;
 import ai.getuseful.duitbetter.repository.WebPageNodeRepository;
-import com.fasterxml.jackson.core.JsonProcessingException;
+import ai.getuseful.duitbetter.service.QuestionsVectorStoreService;
+import org.neo4j.driver.Driver;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.ai.chat.client.advisor.QuestionAnswerAdvisor;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.embedding.EmbeddingModel;
@@ -26,23 +29,53 @@ import java.util.*;
 public class Main implements CommandLineRunner {
     @Autowired
     private EmbeddingModel embeddingModel;
+    private Neo4jVectorStore questionsVectorStore;
     @Autowired
-    private Neo4jVectorStore vectorStore;
+    private Driver driver;
     @Autowired
     private WebPageNodeRepository repository;
     @Autowired
-    private ChatModel chatModel;
+    private QuestionNodeRepository questionNodeRepository;
     @Autowired
     private ChatClient.Builder chatClientBuilder;
+    @Autowired
+    QuestionsVectorStoreService questionsVectorStoreService;
+
+
+    public Neo4jVectorStore getQuestionsVectorStore() {
+        if(questionsVectorStore == null){
+            questionsVectorStore = new Neo4jVectorStore(driver, embeddingModel,
+                    Neo4jVectorStore.Neo4jVectorStoreConfig.builder().withIndexName("questions-index")
+                            .withLabel("Question").withEmbeddingProperty("embedding")
+                            .withEmbeddingDimension(3096).build(), true);
+        }
+        return questionsVectorStore;
+    }
+
+
     @Override
-    public void run(String... args) throws Exception {
-//        performSimilaritySearch();
+    public void run(String... args) {
+        //answerQuestions();
         extractQuestionAnswerPairs();
     }
 
     private void performSimilaritySearch(){
-        List<Document> results = vectorStore.similaritySearch(SearchRequest.defaults().withSimilarityThreshold(0.5).withQuery("what is VoLTE?"));
-        System.out.format("documents found: %d\n", results.size());
+
+        List<String> questions = List.of(
+                "Why are the speedtests result from netchek different from those from ookla?",
+                "Speedtest results from ookla and netcheck are different. Why is that?",
+                "Connection speed reported by du is different from that reported by ookla. Why?",
+                "download speed from du is different from that I get from speedtest, explain"
+        );
+        for(String question:questions){
+            System.out.format("Question: %s\n", question);
+            List<Document> results = getQuestionsVectorStore().similaritySearch(SearchRequest.defaults()
+                    .withSimilarityThreshold(0.7).withQuery(question));
+            Document result = results.getFirst();
+            assert result.getId().equals("f1b065ed-5c78-4634-87d4-cac70c9505da");
+            var q = questionNodeRepository.findById(UUID.fromString((String) result.getMetadata().get("id")));
+            System.out.format("Answer: %s\n",q.getAnswer().getText());
+        }
     }
 
 
@@ -51,32 +84,41 @@ public class Main implements CommandLineRunner {
         var chatClient = chatClientBuilder.build();
         ChatResponse chatResponse = chatClient.prompt()
                 .system("Your are an expert at labelling documents to make them easy to retrieve when asking questions")
-                .user(String.format("Return all the applicable labels for this document, separated by a semicolon, " +
-                        "without any preamble: \n\n %s", page.getText()))
+                .user(String.format("""
+                        Return all the applicable labels for this document, separated by a semicolon, \
+                        without any preamble:\s
+
+                         %s""", page.getText()))
                 .call()
                 .chatResponse();
         System.out.println(chatResponse.getResult().getOutput().toString());
     }
 
-    private void extractQuestionAnswerPairs() throws JsonProcessingException {
-        Pageable pageable = Pageable.ofSize(500);
+    private void extractQuestionAnswerPairs() {
+        Pageable pageable = Pageable.ofSize(200);
         Page<WebPageNode> webPagesWithoutQuestions = repository.findWebPagesWithoutQuestionsAndAnswers(pageable);
         String systemPrompt = "You are a customer support specialist, good at detecting questions and answers in documents" ;
         var chatClient = chatClientBuilder.defaultSystem(systemPrompt).build();
-
         while(!webPagesWithoutQuestions.isEmpty()){
             for(WebPageNode webPageWithoutQuestions: webPagesWithoutQuestions){
                 long started = System.currentTimeMillis();
                 System.out.format("Extracting question and answers from \n%s\nText length: %d\n",
                         webPageWithoutQuestions.getCleanedText(), webPageWithoutQuestions.getCleanedText().length());
-                List<QuestionAndAnswer> response = chatClient.prompt().user(String.format("""
-                                        Extract each question and answer from the following text, keeping in mind that a question must end with a question mark (?) and that an answer can have multiple periods (.). An answer can also be structured into bullet points and continue after a semicolon (:):
-                                  %s
-                                  """, webPageWithoutQuestions.getCleanedText())).call()
-                        .entity(new ParameterizedTypeReference<>() {
-                });
+                List<QuestionAndAnswer> response;
+
+                response = chatClient.prompt().user(String.format("""
+                                      Extract each question and answer from the following text,
+                                      keeping in mind that a question must contain a question mark (?) and that an
+                                      answer can have multiple periods (.).
+                                      An answer can also be structured into bullet points and continue after a
+                                      semicolon (:) Make sure to concatenate each answer into a string:
+                                %s
+                                """, webPageWithoutQuestions.getCleanedText())).call().entity(
+                                        new ParameterizedTypeReference<>() {});
+
                 long finished = System.currentTimeMillis();
-                System.out.format("Q&A extraction took %d minutes\n", ((finished - started)/1000)/60);
+                System.out.format("Q&A extraction took %d seconds\n", (finished - started)/1000);
+                System.out.format("Parsed JSON: %s\n", response.toString());
                 List<QuestionNode> questions = new ArrayList<>();
                 int lastQuestionNotEmpty = 0;
                 int lastAnswerNotEmpty = 0;
@@ -102,11 +144,34 @@ public class Main implements CommandLineRunner {
                         }
                     }
                 }
-                webPageWithoutQuestions.setQuestions(questions);
-                repository.save(webPageWithoutQuestions);
+                if(!questions.isEmpty()) {
+                    System.out.format("Processed questions:\n %s\n", questions);
+                    webPageWithoutQuestions.setQuestions(questions);
+                    repository.save(webPageWithoutQuestions);
+                }
             }
             pageable = pageable.next();
             webPagesWithoutQuestions = repository.findWebPagesWithoutQuestionsAndAnswers(pageable);
         }
+    }
+
+    private void embedQuestions(){
+        Pageable pageable = Pageable.ofSize(200);
+        Page<QuestionNode> questionsWithoutEmbedding = questionNodeRepository.findByEmbeddingIsNull(pageable);
+        while(!questionsWithoutEmbedding.isEmpty()) {
+            getQuestionsVectorStore().add(questionsWithoutEmbedding.get().map(qn -> Document.builder()
+                    .withContent(qn.getText()).withId(qn.getId().toString()).build()).toList());
+            pageable = pageable.next();
+            questionsWithoutEmbedding = questionNodeRepository.findByEmbeddingIsNull(pageable);
+        }
+    }
+
+    private void answerQuestions(){
+        System.out.println("What would you like to ask?");
+        Scanner scanner = new Scanner(System.in);
+        String question = scanner.nextLine();
+        System.out.println(questionsVectorStoreService
+                .answer(SearchRequest.defaults().withSimilarityThreshold(0.7).withQuery(question)));
+
     }
 }

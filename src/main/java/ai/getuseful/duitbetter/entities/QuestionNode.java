@@ -18,7 +18,10 @@ public class QuestionNode {
     UUID id;
     @Property
     private String text;
+    @Property(readOnly = true)
+    private Object embedding;
     @Relationship(type = "HAS_QUESTION", direction = Relationship.Direction.INCOMING)
+    @ToString.Exclude
     private WebPageNode webPage;
     @Relationship(type = "HAS_ANSWER", direction = Relationship.Direction.OUTGOING)
     private AnswerNode answer;

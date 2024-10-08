@@ -19,6 +19,7 @@ public class AnswerNode {
     @Property
     private String text;
     @Relationship(type = "HAS_ANSWER", direction = Relationship.Direction.INCOMING)
+    @ToString.Exclude
     private QuestionNode question;
 
     public AnswerNode(String text){
