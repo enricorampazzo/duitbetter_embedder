@@ -16,7 +16,7 @@ public class EmbedderApplication {
 	}
 
 	public static void main(String[] args) {
-		new SpringApplicationBuilder(EmbedderApplication.class).web(WebApplicationType.NONE).run(args);
+		new SpringApplicationBuilder(EmbedderApplication.class).run(args);
 	}
 
 }

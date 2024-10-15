@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<script src="https://unpkg.com/htmx.org@2.0.3" integrity="sha384-0895/pl2MU10Hqc6jd4RvrthNlDiE9U1tWmX7WRESftEDRosgxNsQG/Ze9YMRzHq" crossorigin="anonymous"></script>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>A better du chatbot</title>
+</head>
+<body>
+    <div>
+        <form>
+            <textarea name="userInput">
+            </textarea>
+            <button hx-post="/answer" type="submit"></button>
+        </form>
+        <div>
+
+        </div>
+
+        <div id="answer">
+
+        </div>
+    </div>
+
+</body>
+</html>

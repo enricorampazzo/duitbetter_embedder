@@ -5,6 +5,7 @@ import ai.getuseful.duitbetter.entities.AnswerNode;
 import ai.getuseful.duitbetter.entities.QuestionNode;
 import ai.getuseful.duitbetter.entities.WebPageNode;
 import ai.getuseful.duitbetter.json.QuestionAndAnswer;
+import ai.getuseful.duitbetter.json.QuestionAndAnswerConverter;
 import ai.getuseful.duitbetter.repository.QuestionNodeRepository;
 import ai.getuseful.duitbetter.repository.WebPageNodeRepository;
 import ai.getuseful.duitbetter.service.QuestionsVectorStoreService;
@@ -24,6 +25,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
+
+import static java.util.stream.Collectors.toList;
 
 @Component
 public class Main implements CommandLineRunner {
@@ -57,6 +60,8 @@ public class Main implements CommandLineRunner {
     public void run(String... args) {
         //answerQuestions();
         extractQuestionAnswerPairs();
+        //embedQuestions();
+        System.exit(0);
     }
 
     private void performSimilaritySearch(){
@@ -113,8 +118,10 @@ public class Main implements CommandLineRunner {
                                       An answer can also be structured into bullet points and continue after a
                                       semicolon (:) Make sure to concatenate each answer into a string:
                                 %s
-                                """, webPageWithoutQuestions.getCleanedText())).call().entity(
-                                        new ParameterizedTypeReference<>() {});
+                                
+                                
+                                Just answer with the JSON data, without any preamble
+                                """, webPageWithoutQuestions.getCleanedText())).call().entity(new QuestionAndAnswerConverter());
 
                 long finished = System.currentTimeMillis();
                 System.out.format("Q&A extraction took %d seconds\n", (finished - started)/1000);
@@ -135,8 +142,8 @@ public class Main implements CommandLineRunner {
                     }
                     if(questionIsEmpty || !question.contains("?")){
                         if(questions.isEmpty()) {
-                            String existingAnswer = Optional.ofNullable(response.get(lastQuestionNotEmpty).getAnswer()).orElse("");
-                            questions.add(new QuestionNode(response.get(lastQuestionNotEmpty).getQuestion(), new AnswerNode(existingAnswer + answer)));
+                            String existingAnswer = (String) Optional.ofNullable(response.get(lastQuestionNotEmpty).getAnswer()).orElse("");
+                            questions.add(new QuestionNode((String) response.get(lastQuestionNotEmpty).getAnswer(), new AnswerNode(existingAnswer + answer)));
                         }
                         else {
                             QuestionNode lastQuestion = questions.getLast();
@@ -156,11 +163,13 @@ public class Main implements CommandLineRunner {
     }
 
     private void embedQuestions(){
-        Pageable pageable = Pageable.ofSize(200);
+        Pageable pageable = Pageable.ofSize(100);
         Page<QuestionNode> questionsWithoutEmbedding = questionNodeRepository.findByEmbeddingIsNull(pageable);
         while(!questionsWithoutEmbedding.isEmpty()) {
-            getQuestionsVectorStore().add(questionsWithoutEmbedding.get().map(qn -> Document.builder()
-                    .withContent(qn.getText()).withId(qn.getId().toString()).build()).toList());
+            getQuestionsVectorStore().add(questionsWithoutEmbedding.get().map(qn -> {
+                System.out.format("now embedding %s\n", qn);
+                return Document.builder().withContent(qn.getText()).withId(qn.getId().toString()).build();
+            }).toList());
             pageable = pageable.next();
             questionsWithoutEmbedding = questionNodeRepository.findByEmbeddingIsNull(pageable);
         }
