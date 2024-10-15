@@ -176,11 +176,11 @@ public class Main implements CommandLineRunner {
     }
 
     private void answerQuestions(){
-        System.out.println("What would you like to ask?");
         Scanner scanner = new Scanner(System.in);
-        String question = scanner.nextLine();
-        System.out.println(questionsVectorStoreService
-                .answer(SearchRequest.defaults().withSimilarityThreshold(0.7).withQuery(question)));
+        System.out.println("what would you like to ask?");
+        for(String question = scanner.nextLine(); question!=null && !question.equals("exit"); System.out.println("what would you like to ask?"), question=scanner.nextLine()) {
+            System.out.println(questionsVectorStoreService.answer(SearchRequest.defaults().withSimilarityThreshold(0.8).withTopK(2).withQuery(question)));
+        }
 
     }
 }

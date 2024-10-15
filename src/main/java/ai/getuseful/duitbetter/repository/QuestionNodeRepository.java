@@ -12,6 +12,6 @@ public interface QuestionNodeRepository extends PagingAndSortingRepository<Quest
 
     Page<QuestionNode> findByEmbeddingIsNull(Pageable page);
     QuestionNode findById(UUID id);
-    List<QuestionNode> findByIdIn(List<UUID> uuids);
+    List<QuestionNode> findDistinctByIdIn(List<UUID> uuids);
 
 }

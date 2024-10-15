@@ -52,7 +52,7 @@ public class GraphQuestionAnswerAdvisor extends QuestionAnswerAdvisor {
     public AdvisedRequest adviseRequest(AdvisedRequest request, Map<String, Object> context) {
         String advisedUserText = request.userText() + System.lineSeparator() + this.userTextAdvise;
         List<Document> questionDocuments = vectorStore.similaritySearch(searchRequest);
-        List<QuestionNode> questions = questionNodeRepository.findByIdIn(questionDocuments.stream()
+        List<QuestionNode> questions = questionNodeRepository.findDistinctByIdIn(questionDocuments.stream()
                 .map(qd -> UUID.fromString(qd.getId())).toList());
         var documents = questions.stream().map(qn -> Document.builder().withContent(qn.getWebPage().getCleanedText()).build()).toList();
         new GraphQuestionAnswerAdvisor(vectorStore, searchRequest, questionNodeRepository);
