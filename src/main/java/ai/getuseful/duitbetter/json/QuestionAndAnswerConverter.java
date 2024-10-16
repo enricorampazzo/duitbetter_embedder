@@ -7,8 +7,8 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 public class QuestionAndAnswerConverter implements StructuredOutputConverter<List<QuestionAndAnswer>> {
-    private Pattern questionPattern = Pattern.compile("\"question\"\\s*:\\s*\"([^\"]*)\"");
-    private Pattern answerPattern = Pattern.compile("\"answer\"\\s*:\\s*\"([^\"]*)\"");
+    private final Pattern questionPattern = Pattern.compile("\"question\"\\s*:\\s*\"([^\"]*)\"");
+    private final Pattern answerPattern = Pattern.compile("\"answer\"\\s*:\\s*\"([^\"]*)\"");
     @Override
     public String getFormat() {
         return """

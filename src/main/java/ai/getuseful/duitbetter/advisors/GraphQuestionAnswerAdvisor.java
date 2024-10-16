@@ -52,6 +52,8 @@ public class GraphQuestionAnswerAdvisor extends QuestionAnswerAdvisor {
     public AdvisedRequest adviseRequest(AdvisedRequest request, Map<String, Object> context) {
         String advisedUserText = request.userText() + System.lineSeparator() + this.userTextAdvise;
         List<Document> questionDocuments = vectorStore.similaritySearch(searchRequest);
+        System.out.println("Most similar questions:");
+        questionDocuments.forEach(d -> System.out.format("%s\n", d.getContent()));
         List<QuestionNode> questions = questionNodeRepository.findDistinctByIdIn(questionDocuments.stream()
                 .map(qd -> UUID.fromString(qd.getId())).toList());
         var documents = questions.stream().map(qn -> Document.builder().withContent(qn.getWebPage().getCleanedText()).build()).toList();

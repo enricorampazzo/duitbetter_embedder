@@ -59,9 +59,9 @@ public class Main implements CommandLineRunner {
     @Override
     public void run(String... args) {
         //answerQuestions();
-        extractQuestionAnswerPairs();
+        //extractQuestionAnswerPairs();
         //embedQuestions();
-        System.exit(0);
+        //System.exit(0);
     }
 
     private void performSimilaritySearch(){
@@ -179,7 +179,7 @@ public class Main implements CommandLineRunner {
         Scanner scanner = new Scanner(System.in);
         System.out.println("what would you like to ask?");
         for(String question = scanner.nextLine(); question!=null && !question.equals("exit"); System.out.println("what would you like to ask?"), question=scanner.nextLine()) {
-            System.out.println(questionsVectorStoreService.answer(SearchRequest.defaults().withSimilarityThreshold(0.8).withTopK(2).withQuery(question)));
+            System.out.println(questionsVectorStoreService.answer(SearchRequest.defaults().withSimilarityThreshold(0.7).withTopK(4).withQuery(question)));
         }
 
     }

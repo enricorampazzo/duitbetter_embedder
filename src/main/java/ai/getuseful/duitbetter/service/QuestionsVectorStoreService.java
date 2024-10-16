@@ -9,6 +9,7 @@ import org.springframework.ai.vectorstore.Neo4jVectorStore;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 
 
 @Service
@@ -34,9 +35,9 @@ public class QuestionsVectorStoreService {
         return questionsVectorStore;
     }
 
-    public String answer(SearchRequest searchRequest){
+    public Flux<String> answer(SearchRequest searchRequest){
         GraphQuestionAnswerAdvisor advisor = new GraphQuestionAnswerAdvisor(
                 getQuestionsVectorStore(), searchRequest, questionNodeRepository);
-        return chatClientBuilder.build().prompt().advisors(advisor).user(searchRequest.getQuery()).call().content();
+        return chatClientBuilder.build().prompt().advisors(advisor).user(searchRequest.getQuery()).stream().content();
     }
 }
