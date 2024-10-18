@@ -30,5 +30,5 @@ I will continue to work on this and see if my approach is valid
 
 At the moment I am using Llama 3.1 8B Instruct to extract question/answers pairs. The results
 are not always good. I had to write some logic to deal with the LLM wrongly splitting
-questions and answers. Maybe I should use regexes, but I think I will have use the LLM and 
+questions and answers. Maybe I should use regexes, but I think I will have to use the LLM and 
 deal with the errors later

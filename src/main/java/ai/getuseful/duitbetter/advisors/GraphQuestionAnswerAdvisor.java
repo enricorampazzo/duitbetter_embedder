@@ -28,6 +28,7 @@ public class GraphQuestionAnswerAdvisor extends QuestionAnswerAdvisor {
     private SearchRequest searchRequest;
     private String userTextAdvise;
     private QuestionNodeRepository questionNodeRepository;
+    private List<Document> documents;
 
     private static final String DEFAULT_USER_TEXT_ADVISE = """
 			Context information is below.
@@ -56,7 +57,9 @@ public class GraphQuestionAnswerAdvisor extends QuestionAnswerAdvisor {
         questionDocuments.forEach(d -> System.out.format("%s\n", d.getContent()));
         List<QuestionNode> questions = questionNodeRepository.findDistinctByIdIn(questionDocuments.stream()
                 .map(qd -> UUID.fromString(qd.getId())).toList());
-        var documents = questions.stream().map(qn -> Document.builder().withContent(qn.getWebPage().getCleanedText()).build()).toList();
+        var documents = questions.stream().map(qn -> Document.builder().withContent(qn.getAnswer().getText()).
+                withMetadata(Map.of("url", qn.getWebPage().getUrl(), "title", qn.getWebPage().getTitle()))
+                .build()).toList();
         new GraphQuestionAnswerAdvisor(vectorStore, searchRequest, questionNodeRepository);
         context.put(QuestionAnswerAdvisor.RETRIEVED_DOCUMENTS, documents);
         String documentContext = documents.stream()
@@ -65,11 +68,13 @@ public class GraphQuestionAnswerAdvisor extends QuestionAnswerAdvisor {
 
         // 4. Advise the user parameters.
         Map<String, Object> advisedUserParams = new HashMap<>(request.userParams());
+        System.out.format("document context: \n%s\n", documentContext);
         advisedUserParams.put("question_answer_context", documentContext);
-
-       return AdvisedRequest.from(request)
+        this.documents = documents;
+        return AdvisedRequest.from(request)
                 .withUserText(advisedUserText)
                 .withUserParams(advisedUserParams)
                 .build();
     }
+
 }

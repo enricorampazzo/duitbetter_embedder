@@ -25,6 +25,8 @@ public class WebPageNode {
     private String cleanedText;
     @Property
     private String text;
+    @Property
+    private String title;
     @EqualsAndHashCode.Exclude
     @ToString.Exclude
     @Relationship(type = "HAS_QUESTION", direction = Relationship.Direction.OUTGOING)

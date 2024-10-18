@@ -23,8 +23,10 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Flux;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toList;
 
@@ -100,7 +102,7 @@ public class Main implements CommandLineRunner {
     }
 
     private void extractQuestionAnswerPairs() {
-        Pageable pageable = Pageable.ofSize(200);
+        Pageable pageable = Pageable.ofSize(1);
         Page<WebPageNode> webPagesWithoutQuestions = repository.findWebPagesWithoutQuestionsAndAnswers(pageable);
         String systemPrompt = "You are a customer support specialist, good at detecting questions and answers in documents" ;
         var chatClient = chatClientBuilder.defaultSystem(systemPrompt).build();
@@ -109,20 +111,23 @@ public class Main implements CommandLineRunner {
                 long started = System.currentTimeMillis();
                 System.out.format("Extracting question and answers from \n%s\nText length: %d\n",
                         webPageWithoutQuestions.getCleanedText(), webPageWithoutQuestions.getCleanedText().length());
+                var converter = new QuestionAndAnswerConverter();
                 List<QuestionAndAnswer> response;
 
-                response = chatClient.prompt().user(String.format("""
+                Flux<String> modelResponseFlux = chatClient.prompt().user(String.format("""
                                       Extract each question and answer from the following text,
                                       keeping in mind that a question must contain a question mark (?) and that an
                                       answer can have multiple periods (.).
                                       An answer can also be structured into bullet points and continue after a
                                       semicolon (:) Make sure to concatenate each answer into a string:
                                 %s
-                                
-                                
-                                Just answer with the JSON data, without any preamble
-                                """, webPageWithoutQuestions.getCleanedText())).call().entity(new QuestionAndAnswerConverter());
-
+                               %s
+                               """, webPageWithoutQuestions.getCleanedText(), converter.getFormat())).stream().content();
+                var modelResponse = modelResponseFlux.map(r -> {
+                    System.out.print(r);
+                    return r;
+                }).collectList().block().stream().collect(Collectors.joining());
+                response = converter.convert(modelResponse);
                 long finished = System.currentTimeMillis();
                 System.out.format("Q&A extraction took %d seconds\n", (finished - started)/1000);
                 System.out.format("Parsed JSON: %s\n", response.toString());

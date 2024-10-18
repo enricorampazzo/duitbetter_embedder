@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 public class QuestionAndAnswerConverter implements StructuredOutputConverter<List<QuestionAndAnswer>> {
-    private final Pattern questionPattern = Pattern.compile("\"question\"\\s*:\\s*\"([^\"]*)\"");
+    private final Pattern questionPattern = Pattern.compile("\"question\"[^:]*:\\s*\"([^\"]*)\"");
     private final Pattern answerPattern = Pattern.compile("\"answer\"\\s*:\\s*\"([^\"]*)\"");
     @Override
     public String getFormat() {
@@ -15,8 +15,8 @@ public class QuestionAndAnswerConverter implements StructuredOutputConverter<Lis
                 Convert each question and answer to JSON list using the following schema:
                 [
                     {
-                        "question": <the question, as a JSON-escaped string>"
-                        "answer": <the answer, as a JSON-escaped string"
+                        "question": <the question, as a JSON string>"
+                        "answer": <the answer, as a JSON string"
                     }
                 ]
                 Just return the JSON data, without any preamble

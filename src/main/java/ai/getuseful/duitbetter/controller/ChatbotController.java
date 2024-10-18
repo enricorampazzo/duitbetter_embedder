@@ -12,18 +12,15 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import reactor.core.publisher.Flux;
 
+import java.util.stream.Collectors;
+
 @Controller
 public class ChatbotController {
-    @Autowired
-    private QuestionsVectorStoreService service;
+
     @GetMapping
     public String home(Model model){
         model.addAttribute("answer", "");
         return "chatbot";
     }
 
-    @GetMapping("/answer")
-    public Flux<String> answer(@RequestParam String userInput, Model model){
-        return service.answer(SearchRequest.defaults().withQuery(userInput));
-    }
 }
