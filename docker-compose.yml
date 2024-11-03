@@ -1,0 +1,28 @@
+services:
+  duitbetter:
+    image: edwardcondon/embedder:0.0.1-SNAPSHOT
+    environment:
+      SPRING_PROFILES_ACTIVE: dockerOpenAI
+      SPRING_AI_OPENAI_API_KEY:
+
+    ports:
+      - "80:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+  db:
+    environment:
+      NEO4J_AUTH: "neo4j/verystrongpassword"
+    image: neo4j:5.25.1-community-bullseye
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    volumes:
+      - ./volumes/data:/data
+      - ./volumes/logs:/logs
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q http://localhost:7474/"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
