@@ -8,21 +8,31 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css"
           integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>A better du chatbot</title>
 </head>
+
 <body>
-    <div>
-        <label for="userInput">Your question</label>
-        <textarea id="userInput" cols="50" rows="5"></textarea>
-        <button id="askButton"   type="button" onclick="ask()">Ask</button>
-    </div>
-    <div style="margin-top:20px;">
-        <span id="answer"></span>
-        <div id="sources" style="margin-top:20px;">
+<!-- justify-content-center-->
+    <div class="d-flex col-md-12 flex-wrap justify-content-center">
+        <div class="row">
+            <div>
+                <h2 class="col mb-4 mt-4">A better du chatbot</h2>
+                <div class="form-group">
+                    <label for="userInput">Your Input</label>
+                    <textarea class="form-control" id="userInput" rows="4" cols="50" placeholder="Enter your text here"></textarea>
+                </div>
+                <button id="askButton" onclick="ask()" class="btn btn-primary btn-block">Ask</button>
+                <div class="mt-4 d-flex col-md-12 flex-wrap justify-content-center" >
+                    <div id="answer" class="mt-4 d-flex col-md-12 flex-wrap justify-content-center"></div>
+                    <div id="sources" class="mt-4 d-flex col-md-12 flex-wrap justify-content-center"></div>
+                </div>
+
+            </div>
 
         </div>
     </div>
-
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
 </html>
 <script>
@@ -33,12 +43,14 @@
             data: {"userInput":$("#userInput").val()}
          }).done(function( data ) {
             $("#answer").text(data["answer"]);
+            $("#answer").addClass(".border-2");
             $("#sources").append("<h3></h3>").text("See also:");
             $("#sources").append("<ul>");
             data["sources"].forEach(function(s) {
                    link = $("<a></a>").text(s["label"]).attr("href", s["url"]);
                    $("#sources ul").append($("<li></li>").append(link));
             });
+            $("#sources").addClass(".border-2");
             $("#askButton").prop("disabled", false);
          }).fail(function( jqxhr, status, errorThrown ) {
             $("#answer").innerHTML="Unable to get response from server";

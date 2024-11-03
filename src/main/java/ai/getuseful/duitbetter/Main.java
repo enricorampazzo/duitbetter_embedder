@@ -109,7 +109,7 @@ public class Main implements CommandLineRunner {
                         Return all the applicable labels for this document, separated by a semicolon, \
                         without any preamble:\s
 
-                         %s""", page.getText()))
+                         %s""", page.getCleanedText()))
                 .call()
                 .chatResponse();
         System.out.println(chatResponse.getResult().getOutput().toString());

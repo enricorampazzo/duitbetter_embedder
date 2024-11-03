@@ -24,8 +24,6 @@ public class WebPageNode {
     @Property
     private String cleanedText;
     @Property
-    private String text;
-    @Property
     private String title;
     @EqualsAndHashCode.Exclude
     @ToString.Exclude

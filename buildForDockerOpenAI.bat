@@ -1,0 +1,2 @@
+SET SPRING_PROFILES_ACTIVE=dockerOpenAI
+gradlew :bootBuildImage
