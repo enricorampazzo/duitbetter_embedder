@@ -26,14 +26,14 @@
                 <h2 class="col mb-4 mt-4">An unofficial (but better) chatbot for the <a href="https://www.du.ae">DU telecom company</a></h2>
                 <p>I built this because I wanted to experiment with <a href="https://medium.com/data-science-in-your-pocket/what-is-graphrag-1ee1cc9027a4">Retrieval Augmented Generation with graph databases</a></p>
                 <div class="form-group">
-                    <label for="userInput">Your Input</label>
+                    <label for="userInput">Your Question</label>
                     <textarea class="form-control" id="userInput" rows="4" cols="50" placeholder="Enter your text here"></textarea>
                 </div>
                 <button id="askButton" onclick="ask()" class="btn btn-primary btn-block">Ask</button>
                 <div id="progressbar"></div>
                 <div class="mt-4 d-flex col-md-12 flex-wrap justify-content-center" >
                     <div id="answer" class="mt-4 d-flex col-md-12 flex-wrap justify-content-center"></div>
-                    <div id="sources" class="mt-4 d-flex col-md-12 flex-wrap justify-content-center"></div>
+                    <div id="sources" class="mt-4 d-flex col-md-12 flex-wrap justify-content-center sources"></div>
                 </div>
 
             </div>
@@ -67,7 +67,7 @@
          }).done(function( data ) {
             $("#answer").text(data["answer"]);
             $("#answer").addClass(".border-2");
-            $("#sources").append("<h3></h3>").text("See also:");
+            $("#sources").append("<h3></h3>").addClass("mb-3").text("See also:");
             $("#sources").append("<ul>");
             data["sources"].forEach(function(s) {
                    link = $("<a></a>").text(s["label"]).attr("href", s["url"]);
@@ -90,5 +90,11 @@
         $("#userInput").prop("disabled", !$("#userInput").prop("disabled"))
     }
 </script>
+<style>
+    .sources {
+        flex-direction:column;
+        align-items:center;
+    }
+</style>
 
 <!--  hx-get="/answer" hx-vals='js:{userInput: document.getElementsByName("userInput")[0].value}' -->
