@@ -5,8 +5,14 @@
             src="https://code.jquery.com/jquery-3.7.1.min.js"
             integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
             crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script
+            src="https://code.jquery.com/ui/1.14.1/jquery-ui.min.js"
+            integrity="sha256-AlTido85uXPlSyyaZNsjJXeCs07eSv3r43kyCVc8ChI="
+            crossorigin="anonymous"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css"
           integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.14.1/themes/base/jquery-ui.css">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>A better du chatbot</title>
@@ -17,12 +23,14 @@
     <div class="d-flex col-md-12 flex-wrap justify-content-center">
         <div class="row">
             <div>
-                <h2 class="col mb-4 mt-4">A better du chatbot</h2>
+                <h2 class="col mb-4 mt-4">An unofficial (but better) chatbot for the <a href="https://www.du.ae">DU telecom company</a></h2>
+                <p>I built this because I wanted to experiment with <a href="https://medium.com/data-science-in-your-pocket/what-is-graphrag-1ee1cc9027a4">Retrieval Augmented Generation with graph databases</a></p>
                 <div class="form-group">
                     <label for="userInput">Your Input</label>
                     <textarea class="form-control" id="userInput" rows="4" cols="50" placeholder="Enter your text here"></textarea>
                 </div>
                 <button id="askButton" onclick="ask()" class="btn btn-primary btn-block">Ask</button>
+                <div id="progressbar"></div>
                 <div class="mt-4 d-flex col-md-12 flex-wrap justify-content-center" >
                     <div id="answer" class="mt-4 d-flex col-md-12 flex-wrap justify-content-center"></div>
                     <div id="sources" class="mt-4 d-flex col-md-12 flex-wrap justify-content-center"></div>
@@ -32,12 +40,27 @@
 
         </div>
     </div>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+        <div id="credits" class="d-flex col-md-12 flex-wrap justify-content-center" style="flex-direction: column;align-items: center;">
+            <p class="small">Created by Enrico Rampazzo</p>
+            <p class="small d-block">Would you like something like this built on-premise for your organization? <a href="https://www.enricorampazzo.tech">Contact me</a></p>
+            <p class="small d-block">Powered by <a href="https://www.neo4j.com">Neo4J</a>, <a href="https://spring.io/projects/spring-ai">Spring AI</a> and <a href="https://www.docker.com">Docker</a></p>
+        </div>
+    <div id="dialog" title="Basic dialog" style="display:none">
+        <p>This bot is good, but it can't read your mind (yet!), so please enter a question ;)</p>
+    </div>
+
 </body>
 </html>
 <script>
     function ask(){
-        $("#askButton").prop("disabled",true);
+        if(!$("#userInput").val() ){
+            $("#dialog").dialog({closeOnEscape: false});
+            return;
+        }
+        toggleInputElements();
+        $( "#progressbar" ).progressbar({
+            value: false
+        }).addClass("ui-progressbar-overlay");
         $.ajax({
             url: "/answer",
             data: {"userInput":$("#userInput").val()}
@@ -51,17 +74,20 @@
                    $("#sources ul").append($("<li></li>").append(link));
             });
             $("#sources").addClass(".border-2");
-            $("#askButton").prop("disabled", false);
+            toggleInputElements();
+            $( "#progressbar" ).progressbar( "destroy" );
+
          }).fail(function( jqxhr, status, errorThrown ) {
             $("#answer").innerHTML="Unable to get response from server";
             console.error(status);
             console.error(errorThrown);
-             $("#askButton").prop("disabled", false);
+            toggleInputElements();
          });
      }
 
-    function sourcesToHtmlList(sources){
-
+    function toggleInputElements(){
+        $("#askButton").prop("disabled", !$("#askButton").prop("disabled"))
+        $("#userInput").prop("disabled", !$("#userInput").prop("disabled"))
     }
 </script>
 
