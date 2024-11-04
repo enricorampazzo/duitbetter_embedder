@@ -19,12 +19,14 @@
 </head>
 
 <body>
-<!-- justify-content-center-->
     <div class="d-flex col-md-12 flex-wrap justify-content-center">
         <div class="row">
             <div>
                 <h2 class="col mb-4 mt-4">An unofficial (but better) chatbot for the <a href="https://www.du.ae">DU telecom company</a></h2>
-                <p>I built this because I wanted to experiment with <a href="https://medium.com/data-science-in-your-pocket/what-is-graphrag-1ee1cc9027a4">Retrieval Augmented Generation with graph databases</a></p>
+                <p class="d-block">I built this because I wanted to experiment with <a href="https://medium.com/data-science-in-your-pocket/what-is-graphrag-1ee1cc9027a4">Retrieval Augmented Generation with graph databases</a></p>
+                <p class="d-block">You can ask questions about troubleshooting your line, how to use your SIM card and the like</p>
+                <p class="d-block">Because this uses an LLM, it can "hallucinate", a fancy term to say "make stuff up".
+                    If in doubt check the links below the answer, which should provide a webpage from the du website as the authoritative source</p>
                 <div class="form-group">
                     <label for="userInput">Your Question</label>
                     <textarea class="form-control" id="userInput" rows="4" cols="50" placeholder="Enter your text here"></textarea>
@@ -52,6 +54,15 @@
 </body>
 </html>
 <script>
+    $(document).ready(function() {
+        $('#userInput').on('keypress', function(e) {
+            if (e.which === 13) // 13 is the Enter key
+                {
+                    $('#askButton').click();
+                   // e.preventDefault(); // prevent newline if needed
+                 }
+            });
+     });
     function ask(){
         if(!$("#userInput").val() ){
             $("#dialog").dialog({closeOnEscape: false});

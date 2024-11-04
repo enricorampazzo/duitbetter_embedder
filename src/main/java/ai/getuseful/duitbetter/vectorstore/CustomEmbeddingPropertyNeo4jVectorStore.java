@@ -1,7 +1,6 @@
 
 package ai.getuseful.duitbetter.vectorstore;
 
-import io.micrometer.observation.ObservationRegistry;
 import org.neo4j.driver.Driver;
 import org.neo4j.driver.Values;
 import org.springframework.ai.autoconfigure.vectorstore.neo4j.Neo4jVectorStoreProperties;
@@ -11,7 +10,6 @@ import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.embedding.EmbeddingOptionsBuilder;
 import org.springframework.ai.embedding.TokenCountBatchingStrategy;
 import org.springframework.ai.vectorstore.Neo4jVectorStore;
-import org.springframework.ai.vectorstore.observation.VectorStoreObservationConvention;
 
 import java.util.HashMap;
 import java.util.List;
@@ -20,10 +18,10 @@ import java.util.Optional;
 
 public class CustomEmbeddingPropertyNeo4jVectorStore extends Neo4jVectorStore {
 
-    private EmbeddingModel embeddingModel;
-    private Driver driver;
-    private BatchingStrategy batchingStrategy;
-    private Neo4jVectorStoreProperties vsProperties;
+    private final EmbeddingModel embeddingModel;
+    private final Driver driver;
+    private final BatchingStrategy batchingStrategy;
+    private final Neo4jVectorStoreProperties vsProperties;
 
 
     public CustomEmbeddingPropertyNeo4jVectorStore(Driver driver, EmbeddingModel embeddingModel,

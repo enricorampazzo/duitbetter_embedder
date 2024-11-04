@@ -4,7 +4,6 @@ import ai.getuseful.duitbetter.dto.GeneratedAnswer;
 import ai.getuseful.duitbetter.service.QuestionsVectorStoreService;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.MimeType;
 import org.springframework.util.MimeTypeUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
